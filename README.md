@@ -1,4 +1,6 @@
-# Practicing Neural Networks
+# NetAPI
+
+## Practicing Neural Networks
 
 This is my binary classifier network API, for fun.
 
