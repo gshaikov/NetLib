@@ -35,7 +35,7 @@ def main():
     dataset_ids = pd.read_csv('dataset/df_id.csv')
 
     # Split into training, validation, and test datasets
-    datasets, labels, sizes = create_datasets(dataset_main, split=0.7)
+    datasets, labels, sizes = create_datasets(dataset_main, split=0.8)
 
     # check that dataset was split correctly
     assert sum(list(map((lambda x: x.shape[0]), datasets))) \
@@ -51,19 +51,19 @@ def main():
     # Create numpy arrays out of DataFrames
     dataset_train = Data(
         dataset_name='training',
-        features=datasets[0].as_matrix().T,
+        features=datasets[0].drop('PassengerId', axis=1).as_matrix().T,
         labels=labels[0].values.reshape(1, sizes[0])
     )
 
     dataset_val = Data(
         dataset_name='validation',
-        features=datasets[1].as_matrix().T,
+        features=datasets[1].drop('PassengerId', axis=1).as_matrix().T,
         labels=labels[1].values.reshape(1, sizes[1])
     )
 
     dataset_test = Data(
         dataset_name='test',
-        features=datasets[2].as_matrix().T,
+        features=datasets[2].drop('PassengerId', axis=1).as_matrix().T,
         no_labels=True
     )
 
@@ -80,6 +80,8 @@ def main():
     net.add_layer(Layer('hidden', 'relu', train_n_features, train_n_features))
     net.add_layer(Layer('hidden', 'relu', train_n_features, train_n_features))
     net.add_layer(Layer('hidden', 'relu', train_n_features, train_n_features))
+    net.add_layer(Layer('hidden', 'relu', train_n_features, train_n_features))
+    net.add_layer(Layer('hidden', 'relu', train_n_features, train_n_features))
 
     net.add_output(Layer('output', 'sigmoid', 1, train_n_features))
 
@@ -93,7 +95,7 @@ def main():
     learn_rate = 0.1
     learn_decay = 1 / 10000 * 0
 
-    lambd = 1.0 * 0
+    lambd = 10.0 * 1
     threshold = 0.5
 
     ###############################
@@ -287,11 +289,11 @@ def main():
 
 
 if __name__ == '__main__':
-    TRAIN_NETWORK = False
+    TRAIN_NETWORK = True
     GENERATE_PREDICTIONS = False
 
     CHECK_BIAS_VARIANCE = False
-    CHECK_HYPERPARAMETERS = True
+    CHECK_HYPERPARAMETERS = False
 
     USE_TENSORFLOW_INSTEAD = False
 

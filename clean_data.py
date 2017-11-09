@@ -75,10 +75,7 @@ def load_data():
     return df
 
 
-def feature_engineering():
-    # Load data
-    df = load_data()
-
+def feature_engineering(df):
     # shuffle dataframe 5 times
     for _ in range(5):
         df = df.sample(frac=1).reset_index(drop=True)
@@ -151,7 +148,16 @@ def feature_engineering():
         else:
             return 'NA'
 
-    cabin_list = ['A', 'B', 'C', 'D', 'E', 'F', 'T', 'G']
+    cabin_list = [
+            'A',
+            'B',
+            'C',
+            'D',
+            'E',
+            'F',
+            # 'T',
+            'G'
+            ]
     df['Deck'] = df['Cabin'].apply(what_cabin)
 
     def check_married(x):
@@ -182,7 +188,7 @@ def feature_engineering():
 def feature_dropping(df):
     # drop some columns
     drop_cols = [
-        'PassengerId',
+        # 'PassengerId',
         # 'Pclass',
         'Name',
         'Title',
@@ -201,7 +207,7 @@ def feature_dropping(df):
         # 'Embarked',
     ]
 
-    df = df.drop(drop_cols, 1)
+    df = df.drop(drop_cols, 1, errors='ignore')
 
     # deal with nan values
     for col in df.columns:
@@ -246,7 +252,10 @@ def create_discrete_features(df):
 
 
 if __name__ == '__main__':
-    df = feature_engineering()
+    # Load data
+    df = load_data()
+    
+    df = feature_engineering(df)
 
 #    df_plot = df[df['Train']==1]
 
@@ -258,7 +267,7 @@ if __name__ == '__main__':
 #    plt.show()
 
     # create separate dataset with IDs
-    df_id = df[['PassengerId', 'Train', 'Survived']]
+    df_id = df[['PassengerId', 'Train', 'Survived']].copy()
 
     df = feature_dropping(df)
 
@@ -308,7 +317,7 @@ def normalize_dataset(dfs):
 
     df_train = dfs[0]
 
-    for col in df_train.columns:
+    for col in df_train.columns.drop('PassengerId', errors='ignore'):
         # find mean and SD of the feature column in training dataset
         mean_val = np.mean(df_train[col])
         # sd_val = np.std(df_train[col])
