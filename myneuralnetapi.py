@@ -10,10 +10,6 @@ import numpy.linalg as LA
 
 import matplotlib.pyplot as plt
 
-import logging
-
-logging.basicConfig(level=logging.ERROR)
-
 
 #####################################################
 
@@ -24,9 +20,27 @@ class Layer(object):
     Activations:
     * relu
     * sigmoid
+    * softmax
     '''
 
+    activation_functions = [
+        'relu',
+        'sigmoid',
+        'softmax',
+    ]
+
     def __init__(self, layer_name, activ_name, n_units, n_connections):
+        if not isinstance(layer_name, str):
+            raise ValueError
+        elif not activ_name in self.activation_functions:
+            raise ValueError
+        elif not isinstance(activ_name, str):
+            raise ValueError
+        elif not (isinstance(n_units, int) or n_units > 0):
+            raise ValueError
+        elif not (isinstance(n_connections, int) or n_connections > 0):
+            raise ValueError
+
         self.weight = None
         self.bias = None
 
@@ -39,20 +53,10 @@ class Layer(object):
         self.d_linear = None
         self.d_activation = None
 
-        if not isinstance(layer_name, str):
-            raise ValueError
         self.layer_name = layer_name
-
-        if not isinstance(activ_name, str):
-            raise ValueError
         self.activ_name = activ_name
 
-        if not (isinstance(n_units, int) or n_units > 0):
-            raise ValueError
         self.n_units = n_units
-
-        if not (isinstance(n_connections, int) or n_connections > 0):
-            raise ValueError
         self.n_connections = n_connections
 
         self.reset_weights()
@@ -64,7 +68,7 @@ class Layer(object):
 
         if self.activ_name == 'relu':
             self.weight *= np.sqrt(2 / self.n_connections)
-        elif self.activ_name == 'sigmoid':
+        elif self.activ_name in ['sigmoid', 'softmax']:
             self.weight *= np.sqrt(1 / self.n_connections)
         else:
             raise Exception("Activation function not specified")
@@ -75,6 +79,8 @@ class Layer(object):
             self.activation = self.relu(self.linear)
         elif self.activ_name == 'sigmoid':
             self.activation = self.sigm(self.linear)
+        elif self.activ_name == 'softmax':
+            self.activation = self.softmax(self.linear)
         else:
             raise Exception("Can't activate this layer")
 
@@ -89,43 +95,52 @@ class Layer(object):
 
     @staticmethod
     def relu(lin_z):
-        '''Relu'''
+        '''relu'''
         return lin_z * (lin_z > 0)
 
     @staticmethod
     def drelu(lin_z):
-        '''dRelu'''
+        '''drelu'''
         return np.array(lin_z > 0, dtype=np.float32)
 
+    def sigm(self, lin_z):
+        '''sigm'''
+        lin_z = self.limit_z(lin_z)
+        return np.exp(lin_z) / (1 + np.exp(lin_z))
+
+    def dsigm(self, lin_z):
+        '''dsigm'''
+        sigmoid_activation = self.sigm(lin_z)
+        return sigmoid_activation * (1 - sigmoid_activation)
+
+    def softmax(self, lin_z):
+        '''softmax'''
+        # lin_z = self.limit_z(lin_z)
+        return np.exp(lin_z) / np.sum(np.exp(lin_z), axis=0, keepdims=True)
+
     @staticmethod
-    def sigm(lin_z):
-        '''Sigm'''
+    def limit_z(lin_z):
+        '''limit_z'''
         # apply function to elements in the array
         # https://stackoverflow.com/questions/35215161/most-efficient-way-to-map-function-over-numpy-array
+        # https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.vectorize.html
         v_upper = np.vectorize(lambda x: 20 if x > 20 else x)
         v_lower = np.vectorize(lambda x: -20 if x < -20 else x)
         lin_z = v_upper(lin_z)
         lin_z = v_lower(lin_z)
-        val = np.exp(lin_z) / (1 + np.exp(lin_z))
-        return val
-
-    def dsigm(self, lin_z):
-        '''dSigm'''
-        sigmoid_activation = self.sigm(lin_z)
-        return sigmoid_activation * (1 - sigmoid_activation)
+        return lin_z
 
 
 class Input(object):
     '''Input layer'''
 
     def __init__(self, n_units):
-        self.activation = None
-
         if not (isinstance(n_units, int) or n_units > 0):
             raise ValueError
-        self.n_units = n_units
 
         self.layer_name = 'input'
+        self.activation = None
+        self.n_units = n_units
 
 
 class Data(object):
@@ -152,18 +167,17 @@ class Data(object):
 
         self.n_features = features.shape[0]
         self.n_examples = features.shape[1]
+        self.n_labels = None
 
         if no_labels is False:
             assert isinstance(labels, np.ndarray)
             assert labels.shape[0] <= labels.shape[1]
 
-            # ensure one output label per example
-            assert labels.shape[0] == 1
-
             # number of data examples is the same
             assert features.shape[1] == labels.shape[1]
 
             self.labels = labels
+            self.n_labels = labels.shape[0]
 
     def trimmed(self, size):
         '''trim the dataset so it becomes shorter'''
@@ -200,8 +214,7 @@ class BinaryClassifierNetwork(object):
         '''
         if not isinstance(input_data, Data):
             raise ValueError('Pass Data object')
-
-        if not isinstance(self.layers_list[0], Input):
+        elif not isinstance(self.layers_list[0], Input):
             raise ValueError('Create input layer first')
 
         self.data = input_data
@@ -217,7 +230,7 @@ class BinaryClassifierNetwork(object):
 
         if self.layers_list:
             if isinstance(self.layers_list[0], Input):
-                self.layers_list = self.layers_list[1:]
+                del self.layers_list[0]
 
         self.layers_list.insert(0, layer)
 
@@ -228,27 +241,27 @@ class BinaryClassifierNetwork(object):
         '''
         if not isinstance(layer, Layer):
             raise ValueError
-        if not self.layers_list:
+        elif not self.layers_list:
             raise ValueError('Network is empty')
+        elif layer.n_connections != self.layers_list[-1].n_units:
+            raise ValueError(
+                'layer.n_connections != self.layers_list[-1].n_units')
+        elif not isinstance(position, int) and not position is None:
+            raise ValueError('Position argument must be int')
 
         if position is None:
             self.layers_list.append(layer)
-        elif isinstance(position, int):
-            self.layers_list.insert(position, layer)
         else:
-            raise ValueError(
-                'Wrong type of the "position" argument, must be int')
+            self.layers_list.insert(position, layer)
 
     def add_output(self, layer):
         '''
         add_output
         layer : Layer object
         '''
-        if not layer.activ_name == 'sigmoid':
-            raise ValueError(
-                'Output layer must have Sigmoid activation function')
-        if layer.n_units != 1:
-            raise ValueError('Output layer must contain only 1 unit')
+        if not layer.activ_name in ['sigmoid', 'softmax']:
+            raise ValueError('Wrong activation function')
+
         self.add_layer(layer)
 
     def show_network(self):
@@ -263,12 +276,9 @@ class BinaryClassifierNetwork(object):
         '''forward_prop'''
         if not isinstance(self.layers_list[0], Input):
             raise ValueError('Create input layer first')
-        if self.layers_list[-1].n_units != 1 \
-                or self.layers_list[-1].activ_name != 'sigmoid':
+        elif not self.layers_list[-1].activ_name in ['sigmoid', 'softmax']:
             raise ValueError('Output layer is wrong')
-        if len(self.layers_list) == 1:
-            raise ValueError('Add more layers first')
-        if not self.data:
+        elif not self.data:
             raise ValueError('Load data')
 
         for idx, lay in enumerate(self.layers_list):
@@ -323,8 +333,11 @@ class BinaryClassifierNetwork(object):
         probabilities = self.layers_list[-1].activation
         real_labels = self.data.labels
 
-        val = np.multiply(real_labels, np.log(probabilities)) + \
-            np.multiply((1 - real_labels), np.log(1 - probabilities))
+        val = np.multiply(real_labels, np.log(probabilities))
+
+        if self.layers_list[-1].activ_name == 'sigmoid':
+            val += np.multiply((1 - real_labels), np.log(1 - probabilities))
+
         assert val.shape == (real_labels.shape[0], real_labels.shape[1])
 
         val = np.sum(val, axis=0, keepdims=True)
@@ -418,25 +431,10 @@ class BinaryClassifierNetwork(object):
         '''
         assert isinstance(dataset.labels, np.ndarray)
 
-        true_positives = np.sum(np.array(
-            predictions + dataset.labels == 2,
-            dtype=np.int32
-        ))
-
-        true_negatives = np.sum(np.array(
-            predictions + dataset.labels == 0,
-            dtype=np.int32
-        ))
-
-        false_positives = np.sum(np.array(
-            predictions - dataset.labels == 1,
-            dtype=np.int32
-        ))
-
-        false_negatives = np.sum(np.array(
-            predictions - dataset.labels == -1,
-            dtype=np.int32
-        ))
+        true_positives = np.sum(predictions + dataset.labels == 2, axis=1)
+        true_negatives = np.sum(predictions + dataset.labels == 0, axis=1)
+        false_positives = np.sum(predictions - dataset.labels == 1, axis=1)
+        false_negatives = np.sum(predictions - dataset.labels == -1, axis=1)
 
         accuracy = (true_positives + true_negatives) / dataset.labels.shape[1]
         precision = true_positives / (true_positives + false_positives)
