@@ -96,39 +96,39 @@ class Layer(object):
     @staticmethod
     def relu(lin_z):
         '''relu'''
-        return lin_z * (lin_z > 0)
+        val = lin_z * (lin_z > 0)
+        # https://stackoverflow.com/questions/911871/detect-if-a-numpy-array-contains-at-least-one-non-numeric-value
+        assert not np.isnan(val).any()
+        return val
 
     @staticmethod
     def drelu(lin_z):
         '''drelu'''
-        return np.array(lin_z > 0, dtype=np.float32)
+        val = np.array(lin_z > 0, dtype=np.float32)
+        assert not np.isnan(val).any()
+        return val
 
     def sigm(self, lin_z):
         '''sigm'''
-        lin_z = self.limit_z(lin_z)
-        return np.exp(lin_z) / (1 + np.exp(lin_z))
+        # https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.clip.html
+        lin_z = np.clip(lin_z, -20, 20)
+        val = np.exp(lin_z) / (1 + np.exp(lin_z))
+        assert not np.isnan(val).any()
+        return val
 
     def dsigm(self, lin_z):
         '''dsigm'''
         sigmoid_activation = self.sigm(lin_z)
-        return sigmoid_activation * (1 - sigmoid_activation)
+        val = sigmoid_activation * (1 - sigmoid_activation)
+        assert not np.isnan(val).any()
+        return val
 
     def softmax(self, lin_z):
         '''softmax'''
-        # lin_z = self.limit_z(lin_z)
-        return np.exp(lin_z) / np.sum(np.exp(lin_z), axis=0, keepdims=True)
-
-    @staticmethod
-    def limit_z(lin_z):
-        '''limit_z'''
-        # apply function to elements in the array
-        # https://stackoverflow.com/questions/35215161/most-efficient-way-to-map-function-over-numpy-array
-        # https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.vectorize.html
-        v_upper = np.vectorize(lambda x: 20 if x > 20 else x)
-        v_lower = np.vectorize(lambda x: -20 if x < -20 else x)
-        lin_z = v_upper(lin_z)
-        lin_z = v_lower(lin_z)
-        return lin_z
+        lin_z = np.clip(lin_z, -20, 20)
+        val = np.exp(lin_z) / np.sum(np.exp(lin_z), axis=0, keepdims=True)
+        assert not np.isnan(val).any()
+        return val
 
 
 class Input(object):
@@ -288,9 +288,15 @@ class BinaryClassifierNetwork(object):
                 lay.linear += lay.bias
                 lay.activate()
 
+        # debug code
         if not np.all(self.layers_list[-1].activation < 1.0):
+            print(self.layers_list[-1].linear)
+            print(self.layers_list[-1].activation)
             plt.figure()
             plt.plot(np.squeeze(self.layers_list[-1].linear))
+            plt.show()
+            plt.figure()
+            plt.plot(np.squeeze(self.layers_list[-1].activation))
             plt.show()
             raise ValueError("Value(s) in A[L] == 1, so log(1-A[L]) == -inf")
 
@@ -431,21 +437,28 @@ class BinaryClassifierNetwork(object):
         '''
         assert isinstance(dataset.labels, np.ndarray)
 
-        true_positives = np.sum(predictions + dataset.labels == 2, axis=1)
-        true_negatives = np.sum(predictions + dataset.labels == 0, axis=1)
-        false_positives = np.sum(predictions - dataset.labels == 1, axis=1)
-        false_negatives = np.sum(predictions - dataset.labels == -1, axis=1)
+        # true_positives = np.sum(predictions + dataset.labels == 2, axis=1)
+        # true_negatives = np.sum(predictions + dataset.labels == 0, axis=1)
+        # false_positives = np.sum(predictions - dataset.labels == 1, axis=1)
+        # false_negatives = np.sum(predictions - dataset.labels == -1, axis=1)
 
-        accuracy = (true_positives + true_negatives) / dataset.labels.shape[1]
-        precision = true_positives / (true_positives + false_positives)
-        recall = true_positives / (true_positives + false_negatives)
-        f1score = 2 * precision * recall / (precision + recall)
+        # accuracy = (true_positives + true_negatives) / dataset.labels.shape[1]
+        # precision = true_positives / (true_positives + false_positives)
+        # recall = true_positives / (true_positives + false_negatives)
+        # f1score = 2 * precision * recall / (precision + recall)
+
+        correct = np.sum(
+            np.amax(predictions + dataset.labels, axis=0, keepdims=True) == 2,
+            axis=1
+        )
+
+        accuracy = correct / dataset.n_examples
 
         prediction_metrics = {
             dataset.dataset_name + '_accuracy': accuracy,
-            dataset.dataset_name + '_precision': precision,
-            dataset.dataset_name + '_recall': recall,
-            dataset.dataset_name + '_f1score': f1score,
+            # dataset.dataset_name + '_precision': precision,
+            # dataset.dataset_name + '_recall': recall,
+            # dataset.dataset_name + '_f1score': f1score,
         }
 
         return prediction_metrics
