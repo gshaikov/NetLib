@@ -405,6 +405,14 @@ class BinaryClassifierNetwork(object):
 
         return predictions
 
+    @staticmethod
+    def softmax_to_category(predictions):
+        '''
+        convert from softmax vector output to int
+        https://stackoverflow.com/questions/42497340/how-to-convert-one-hot-encodings-into-integers
+        '''
+        return np.argmax(predictions == 1, axis=0).reshape(1, predictions.shape[1])
+
     def predict_and_compare(self, input_data, threshold=0.5):
         '''
         predict_and_compare
