@@ -45,9 +45,8 @@ def plot_decision_boundary(net, X, y):
         threshold=0.5,
     )
 
-    # https://stackoverflow.com/questions/42497340/how-to-convert-one-hot-encodings-into-integers
     if net.layers_list[-1].activ_name == 'softmax':
-        Z = np.argmax(Z == 1, axis=0)
+        Z = net.softmax_to_category(Z)
 
     Z = Z.reshape(xx.shape)
 
