@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 # Helper function to plot a decision boundary.
 # If you don't fully understand this function don't worry, it just generates the contour plot below.
 def plot_decision_boundary(net, X, y):
+    '''plot_decision_boundary'''
     # Set min and max values and give it some padding
     x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5
     y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5
@@ -57,7 +58,7 @@ def plot_decision_boundary(net, X, y):
     plt.show()
 
 
-def main():
+def _main():
     print("Neural Network Test")
 
     #%% generate dataset
@@ -96,8 +97,9 @@ def main():
     features_size = dataset.n_features
     labels_size = dataset.n_labels
 
+    BinaryClassifierNetwork.grad_check()
+
     net = BinaryClassifierNetwork()
-    net.grad_check()
 
     net.add_input(Input(features_size))
 
@@ -153,4 +155,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    _main()
