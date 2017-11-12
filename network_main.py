@@ -110,8 +110,9 @@ def _main():
     features_size = dataset_train.n_features
     labels_size = dataset_train.n_labels
 
+    BinaryClassifierNetwork.grad_check()
+
     net = BinaryClassifierNetwork()
-    net.grad_check()
 
     net.add_input(Input(features_size))
 
