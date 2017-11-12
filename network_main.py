@@ -5,103 +5,139 @@ Practicing basics with a small neural net
 @author: gshai
 """
 
-from clean_data import create_datasets, normalize_dataset
-
 from myneuralnetapi import Layer, Input, Data
 from myneuralnetapi import BinaryClassifierNetwork
-
-#import tensorflow as tf
-#from tensorflow.python.framework import ops
 
 import numpy as np
 import pandas as pd
 
+from sklearn.preprocessing import OneHotEncoder
+
 import matplotlib.pyplot as plt
 
-import logging
 
-logging.basicConfig(level=logging.ERROR)
+MODE = {
+    'train_network': False,
+    'generate_predictions': False,
+    'check_bias_variance': False,
+    'check_hyperparameters': False,
+}
+
+MODE['train_network'] = True
+
+if MODE['generate_predictions'] and not MODE['train_network']:
+    MODE['train_network'] = True
 
 
-#####################################################
+def take_features(dataset):
+    '''take_features'''
+    # dataset to array, normalize features
+    features = dataset[['pixel' + str(idx) for idx in range(784)]].as_matrix()
+    features = features / (np.max(features) - np.min(features))
+    return features
 
 
-def main():
-    '''main'''
-    np.random.seed(1)
+def split_array(data_array, *args):
+    '''dataset of variable size data arrays'''
+    if args:
+        sets = list()
+        start = 0
+        for size in args:
+            sets.append(data_array[start:start + size, :])
+            start = size
+    else:
+        sets = [data_array]
+    assert isinstance(sets, list)
+    return sets
 
-    # load engineered dataset
-    dataset_main = pd.read_csv('dataset/df.csv')
-    dataset_ids = pd.read_csv('dataset/df_id.csv')
 
-    # Split into training, validation, and test datasets
-    datasets, labels, sizes = create_datasets(dataset_main, split=0.8)
+def _main():
+    print('Neural Network App')
 
-    # check that dataset was split correctly
-    assert sum(list(map((lambda x: x.shape[0]), datasets))) \
-        == dataset_main.shape[0]
+    #%% reate/load a dataset
 
-    # Normalize
-    datasets = normalize_dataset(datasets)
+    csv_table = pd.read_csv('dataset/train.csv')
+    csv_table_test = pd.read_csv('dataset/test.csv')
 
-    # check that dataset was split correctly
-    assert sum(list(map((lambda x: x.shape[0]), datasets))) \
-        == dataset_main.shape[0]
+    # shuffle training dataframe
+    csv_table = csv_table.sample(frac=1).reset_index(drop=True)
 
-    # Create numpy arrays out of DataFrames
+    # create features arrays
+    features = take_features(csv_table)
+    features_test = take_features(csv_table_test)
+
+    # create labels array, convert 0...9 labels to [0,1,0,...,0] vectors
+    labels = csv_table['label'].as_matrix()[:, np.newaxis]
+    onehot_encoder = OneHotEncoder(sparse=False)
+    labels_onehot = onehot_encoder.fit_transform(labels)
+
+    # sizes of datasets
+    m_train = 1000
+    m_val = 1000
+
+    # split arrays into train and val
+    features_train, features_val = split_array(features, m_train, m_val)
+    labels_train, labels_val = split_array(labels_onehot, m_train, m_val)
+
     dataset_train = Data(
-        dataset_name='training',
-        features=datasets[0].drop('PassengerId', axis=1).as_matrix().T,
-        labels=labels[0].values.reshape(1, sizes[0])
+        'training',
+        features=features_train.T,
+        labels=labels_train.T,
     )
 
     dataset_val = Data(
-        dataset_name='validation',
-        features=datasets[1].drop('PassengerId', axis=1).as_matrix().T,
-        labels=labels[1].values.reshape(1, sizes[1])
+        'validation',
+        features=features_val.T,
+        labels=labels_val.T,
     )
 
     dataset_test = Data(
-        dataset_name='test',
-        features=datasets[2].drop('PassengerId', axis=1).as_matrix().T,
-        no_labels=True
+        'testing',
+        features=features_test.T,
+        no_labels=True,
     )
 
-    ###############################
-    # Build the network
+    assert dataset_train.features.shape[1] \
+        + dataset_val.features.shape[1] == m_train + m_val
 
-    train_n_features = dataset_train.n_features
+    # https://stackoverflow.com/questions/3823752/display-image-as-grayscale-using-matplotlib
+    plt.figure()
+    plt.imshow(features[0, :].reshape((28, 28)), cmap='gray')
+    plt.show()
+
+    #%% Build the network
+
+    features_size = dataset_train.n_features
+    labels_size = dataset_train.n_labels
 
     net = BinaryClassifierNetwork()
     net.grad_check()
 
-    net.add_input(Input(train_n_features))
+    net.add_input(Input(features_size))
 
-    net.add_layer(Layer('hidden', 'relu', train_n_features, train_n_features))
-    net.add_layer(Layer('hidden', 'relu', train_n_features, train_n_features))
-    net.add_layer(Layer('hidden', 'relu', train_n_features, train_n_features))
-    net.add_layer(Layer('hidden', 'relu', train_n_features, train_n_features))
-    net.add_layer(Layer('hidden', 'relu', train_n_features, train_n_features))
+    net.add_layer(Layer('hidden', 'relu', 200, features_size))
+    net.add_layer(Layer('hidden', 'relu', 100, 200))
+    net.add_layer(Layer('hidden', 'relu', 50, 100))
+    net.add_layer(Layer('hidden', 'relu', 25, 50))
+    net.add_layer(Layer('hidden', 'relu', 15, 25))
 
-    net.add_output(Layer('output', 'sigmoid', 1, train_n_features))
+    net.add_output(Layer('output', 'softmax', labels_size, 15))
 
     net.show_network()
 
-    ###############################
-    # Hyperparameters
+    #%% Hyperparameters
 
     epochs = 100000
 
-    learn_rate = 0.1
+    learn_rate = 0.01
     learn_decay = 1 / 10000 * 0
 
-    lambd = 10.0 * 1
+    lambd = 1.0 * 0
     threshold = 0.5
 
-    ###############################
-    # Train the network
+    #%% Train the network
 
-    if TRAIN_NETWORK is True:
+    if MODE['train_network']:
 
         # prediction results will be collected here
         results_table = pd.DataFrame()
@@ -136,32 +172,26 @@ def main():
         plt.title('Costs (iter / 1000)')
         plt.show()
 
-    ###############################
-    # Generate predictions
+    #%% Generate predictions
 
-    if GENERATE_PREDICTIONS is True:
-        assert TRAIN_NETWORK
+    if MODE['generate_predictions']:
+        assert MODE['train_network']
 
         predictions = net.predict(dataset_test, threshold)
+        predictions = net.softmax_to_category(predictions)
 
-        predicted_ids = pd.concat([
-            dataset_ids[
-                dataset_ids['Train'] == 0][
-                    'PassengerId'].reset_index(drop=True),
-            pd.Series(np.squeeze(predictions.T)),
-        ], axis=1)
+        predictions_df = pd.DataFrame(predictions.T).reset_index()
+        predictions_df.columns = ['ImageId', 'Label']
+        predictions_df['ImageId'] += 1
 
-        predicted_ids.to_csv(
-            'result/output.csv',
-            header=['PassengerId', 'Survived'],
+        predictions_df.to_csv(
+            'results/digits_test.csv',
             index=False,
         )
 
-    ###############################
-    # Diagnose network - bias or variance
-    # Train network with different sizes of the training dataset
+    #%% bias or variance
 
-    if CHECK_BIAS_VARIANCE is True:
+    if MODE['check_bias_variance']:
 
         # array with values for various sizes of the training dataset
         size_train_vec = np.linspace(
@@ -217,10 +247,9 @@ def main():
         plt.title('J_train, J_val (m_size)')
         plt.show()
 
-    ###############################
-    # Diagnose network - tune hyperparameters
+    #%% tune hyperparameters
 
-    if CHECK_HYPERPARAMETERS is True:
+    if MODE['check_hyperparameters']:
 
         # array of var learning rates
         learn_rate_vec = np.logspace(
@@ -276,28 +305,9 @@ def main():
         print(results_table)
         results_table.to_csv('result/results_table.csv')
 
-    ###############################
-    # Use tensorflow
 
-    if USE_TENSORFLOW_INSTEAD is True:
-        pass
-
-    return results_table
-
-
-#####################################################
+#%%
 
 
 if __name__ == '__main__':
-    TRAIN_NETWORK = True
-    GENERATE_PREDICTIONS = False
-
-    CHECK_BIAS_VARIANCE = False
-    CHECK_HYPERPARAMETERS = False
-
-    USE_TENSORFLOW_INSTEAD = False
-
-    if GENERATE_PREDICTIONS and not TRAIN_NETWORK:
-        TRAIN_NETWORK = True
-
-    RESULTS_DF = main()
+    _main()
