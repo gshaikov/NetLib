@@ -8,8 +8,6 @@ My custom neural net API
 import numpy as np
 import numpy.linalg as LA
 
-import matplotlib.pyplot as plt
-
 
 #####################################################
 
@@ -108,7 +106,8 @@ class Layer(object):
         assert not np.isnan(val).any()
         return val
 
-    def sigm(self, lin_z):
+    @staticmethod
+    def sigm(lin_z):
         '''sigm'''
         # https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.clip.html
         lin_z = np.clip(lin_z, -20, 20)
@@ -123,7 +122,8 @@ class Layer(object):
         assert not np.isnan(val).any()
         return val
 
-    def softmax(self, lin_z):
+    @staticmethod
+    def softmax(lin_z):
         '''softmax'''
         lin_z = np.clip(lin_z, -20, 20)
         val = np.exp(lin_z) / np.sum(np.exp(lin_z), axis=0, keepdims=True)
@@ -182,19 +182,20 @@ class Data(object):
     def trimmed(self, size):
         '''trim the dataset so it becomes shorter'''
         new_features = self.features[:, :size]
-        if not self.labels is None:
-            new_labels = self.labels[:, :size]
-            return Data(
-                dataset_name=self.dataset_name + '_trimmed',
-                features=new_features,
-                labels=new_labels
-            )
-        else:
-            return Data(
+        if self.labels is None:
+            data_trimmed = Data(
                 dataset_name=self.dataset_name + '_trimmed',
                 features=new_features,
                 no_labels=True
             )
+        else:
+            new_labels = self.labels[:, :size]
+            data_trimmed = Data(
+                dataset_name=self.dataset_name + '_trimmed',
+                features=new_features,
+                labels=new_labels
+            )
+        return data_trimmed
 
 
 #####################################################
@@ -290,6 +291,7 @@ class BinaryClassifierNetwork(object):
 
         # debug code
         if not np.all(self.layers_list[-1].activation < 1.0):
+            import matplotlib.pyplot as plt
             print(self.layers_list[-1].linear)
             print(self.layers_list[-1].activation)
             plt.figure()
@@ -471,7 +473,8 @@ class BinaryClassifierNetwork(object):
 
         return prediction_metrics
 
-    def grad_check(self):
+    @classmethod
+    def grad_check(cls):
         '''
         grad_check
         Check if gradient descent algorithm works correctly
@@ -488,7 +491,7 @@ class BinaryClassifierNetwork(object):
             return cost
 
         print("\nPerforming gradient check")
-        testnet = BinaryClassifierNetwork()
+        testnet = cls()
         testnet.add_input(Input(4))
         testnet.add_output(Layer('output', 'sigmoid', 1, 4))
         testnet.show_network()
