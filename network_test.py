@@ -10,6 +10,7 @@ from myneuralnetapi import BinaryClassifierNetwork
 
 import numpy as np
 #import pandas as pd
+
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.preprocessing import OneHotEncoder
 
@@ -43,7 +44,7 @@ def plot_decision_boundary(net, X, y):
         input_data=dataset,
         threshold=0.5,
     )
-    
+
     # https://stackoverflow.com/questions/42497340/how-to-convert-one-hot-encodings-into-integers
     if net.layers_list[-1].activ_name == 'softmax':
         Z = np.argmax(Z == 1, axis=0)
@@ -62,6 +63,7 @@ def main():
 
     #%% generate dataset
 
+    # http://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_blobs.html
     data = make_blobs(
         n_samples=1000,
         n_features=2,
