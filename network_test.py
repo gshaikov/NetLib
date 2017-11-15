@@ -5,11 +5,11 @@ Created on Sat Nov 11 17:24:08 2017
 @author: gshai
 """
 
-from myneuralnetapi import Layer, Input, Data
+from myneuralnetapi import Layer, Input, DataInNetwork
 from myneuralnetapi import BinaryClassifierNetwork
 
 import numpy as np
-#import pandas as pd
+import pandas as pd
 
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.preprocessing import OneHotEncoder
@@ -35,21 +35,12 @@ def plot_decision_boundary(net, X, y):
 
     # Predict the function value for the whole gid
     data = np.c_[xx.ravel(), yy.ravel()]
-    dataset = Data(
-        'boundary',
+    dataset = DataInNetwork(
         features=data.T,
         no_labels=True,
     )
 
-    Z = net.predict(
-        input_data=dataset,
-        threshold=0.5,
-    )
-
-    if net.layers_list[-1].activ_name == 'softmax':
-        Z = net.softmax_to_category(Z)
-
-    Z = Z.reshape(xx.shape)
+    Z = net.predict(dataset).reshape(xx.shape)
 
     # Plot the contour and training examples
     plt.figure()
@@ -80,8 +71,7 @@ def _main():
     onehot_encoder = OneHotEncoder(sparse=False)
     labels_onehot = onehot_encoder.fit_transform(labels)
 
-    dataset = Data(
-        'blobs',
+    dataset = DataInNetwork(
         features=features.T,
         labels=labels_onehot.T,
     )
@@ -114,36 +104,49 @@ def _main():
 
     #%% Hyperparameters
 
-    epochs = 30000
+    epochs = 10000
 
-    learn_rate = 0.01
-    learn_decay = 1 / 5000 * 0
+    learn_rate = 0.001
 
-    lambd = 1.0 * 1
-    threshold = 0.5
+    lambd_val = 300.0
 
     #%% train the network
 
-    cost_list = net.train(
-        input_data=dataset,
-        epochs=epochs,
-        learn_rate=learn_rate,
-        learn_decay=learn_decay,
-        lambd=lambd,
-    )
+    net.reset_network()
 
-    results = {'cost_list': cost_list}
+    costs_run_table = pd.DataFrame(columns=['cost_train'])
 
-    predictions, prediction_metrics = net.predict_and_compare(
-        input_data=dataset,
-        threshold=threshold,
-    )
+    try:
+        net.load_data(dataset)
 
-    results.update(prediction_metrics)
+        for epoch in range(1, epochs + 1):
+            # train routine
+            cost_train_epoch = net.train(
+                learn_rate=learn_rate,
+                lambd=lambd_val,
+            )
+
+            costs_run_table = costs_run_table.append({
+                'cost_train': cost_train_epoch,
+            }, ignore_index=True)
+
+            if epoch % 100 == 0:
+                print("epoch {} train cost {:.4f}".format(
+                    epoch, cost_train_epoch))
+
+    except KeyboardInterrupt:
+        pass
+
+    predictions, prediction_metrics_train \
+        = net.predict_and_compare(dataset)
+
+    print("Accuracy train: {:6.4f}%".format(
+        prediction_metrics_train['accuracy'] * 100))
 
     plt.figure()
-    plt.plot(cost_list)
-    plt.title('Costs (iter / 1000)')
+    plt.plot(costs_run_table['cost_train'])
+    plt.legend(['cost_train'])
+    plt.title('Costs (epoch)')
     plt.show()
 
     #%%
