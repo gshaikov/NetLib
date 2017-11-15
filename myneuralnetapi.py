@@ -27,6 +27,11 @@ class Layer(object):
         'softmax',
     ]
 
+    # Adam parameters
+    adam_beta_1 = 0.9
+    adam_beta_2 = 0.999
+    adam_eps = 1e-8
+
     def __init__(self, layer_name, activ_name, n_units, n_connections):
         if not isinstance(layer_name, str):
             raise ValueError
@@ -51,6 +56,12 @@ class Layer(object):
         self.d_linear = None
         self.d_activation = None
 
+        # Adam optimizer variables
+        self.vd_weight = None
+        self.sd_weight = None
+        self.vd_bias = None
+        self.sd_bias = None
+
         self.layer_name = layer_name
         self.activ_name = activ_name
 
@@ -70,6 +81,11 @@ class Layer(object):
             self.weight *= np.sqrt(1 / self.n_connections)
         else:
             raise Exception("Activation function not specified")
+
+        self.vd_weight = 0
+        self.sd_weight = 0
+        self.vd_bias = 0
+        self.sd_bias = 0
 
     def activate(self):
         '''activate'''
@@ -94,7 +110,7 @@ class Layer(object):
     @staticmethod
     def relu(lin_z):
         '''relu'''
-        val = lin_z * (lin_z > 0)
+        val = lin_z * (lin_z > 0) + 0.01 * lin_z * (lin_z < 0)  # leaky relu
         # https://stackoverflow.com/questions/911871/detect-if-a-numpy-array-contains-at-least-one-non-numeric-value
         assert not np.isnan(val).any()
         return val
@@ -102,7 +118,7 @@ class Layer(object):
     @staticmethod
     def drelu(lin_z):
         '''drelu'''
-        val = np.array(lin_z > 0, dtype=np.float32)
+        val = (lin_z > 0) + 0.01 * (lin_z < 0)  # leaky relu
         assert not np.isnan(val).any()
         return val
 
@@ -110,7 +126,7 @@ class Layer(object):
     def sigm(lin_z):
         '''sigm'''
         # https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.clip.html
-        lin_z = np.clip(lin_z, -20, 20)
+        lin_z = np.clip(lin_z, -30, 30)  # prevent np.exp() overflow
         val = np.exp(lin_z) / (1 + np.exp(lin_z))
         assert not np.isnan(val).any()
         return val
@@ -125,7 +141,7 @@ class Layer(object):
     @staticmethod
     def softmax(lin_z):
         '''softmax'''
-        lin_z = np.clip(lin_z, -20, 20)
+        lin_z = np.clip(lin_z, -30, 30)  # prevent np.exp() overflow
         val = np.exp(lin_z) / np.sum(np.exp(lin_z), axis=0, keepdims=True)
         assert not np.isnan(val).any()
         return val
@@ -143,7 +159,7 @@ class Input(object):
         self.n_units = n_units
 
 
-class Data(object):
+class DataInNetwork(object):
     '''
     Data
     features and labels are numpy.ndarray type
@@ -154,7 +170,7 @@ class Data(object):
     '''
 
     def __init__(self,
-                 dataset_name,
+                 dataset_name=None,
                  features=np.array([[]]),
                  labels=np.array([[]]),
                  no_labels=False):
@@ -183,15 +199,15 @@ class Data(object):
         '''trim the dataset so it becomes shorter'''
         new_features = self.features[:, :size]
         if self.labels is None:
-            data_trimmed = Data(
-                dataset_name=self.dataset_name + '_trimmed',
+            data_trimmed = DataInNetwork(
+                dataset_name='trimmed',
                 features=new_features,
                 no_labels=True
             )
         else:
             new_labels = self.labels[:, :size]
-            data_trimmed = Data(
-                dataset_name=self.dataset_name + '_trimmed',
+            data_trimmed = DataInNetwork(
+                dataset_name='trimmed',
                 features=new_features,
                 labels=new_labels
             )
@@ -213,7 +229,7 @@ class BinaryClassifierNetwork(object):
         load_data
         input_data : Data
         '''
-        if not isinstance(input_data, Data):
+        if not isinstance(input_data, DataInNetwork):
             raise ValueError('Pass Data object')
         elif not isinstance(self.layers_list[0], Input):
             raise ValueError('Create input layer first')
@@ -273,6 +289,12 @@ class BinaryClassifierNetwork(object):
                 idx, item.layer_name, item.n_units))
         print()
 
+    def reset_network(self):
+        '''reset all weights and biases'''
+        for item in self.layers_list:
+            if isinstance(item, Layer):
+                item.reset_weights()
+
     def forward_prop(self):
         '''forward_prop'''
         if not isinstance(self.layers_list[0], Input):
@@ -289,19 +311,6 @@ class BinaryClassifierNetwork(object):
                 lay.linear += lay.bias
                 lay.activate()
 
-        # debug code
-        if not np.all(self.layers_list[-1].activation < 1.0):
-            import matplotlib.pyplot as plt
-            print(self.layers_list[-1].linear)
-            print(self.layers_list[-1].activation)
-            plt.figure()
-            plt.plot(np.squeeze(self.layers_list[-1].linear))
-            plt.show()
-            plt.figure()
-            plt.plot(np.squeeze(self.layers_list[-1].activation))
-            plt.show()
-            raise ValueError("Value(s) in A[L] == 1, so log(1-A[L]) == -inf")
-
     def backward_prop(self):
         '''backward_prop'''
         if not isinstance(self.layers_list[-1].activation, np.ndarray):
@@ -315,13 +324,26 @@ class BinaryClassifierNetwork(object):
             if isinstance(lay, Layer) and idx >= 1:
                 if not isinstance(lay.activation, np.ndarray):
                     raise ValueError('Do forward prop first')
+
                 lay_prev = self.layers_list[idx - 1]
-                lay.d_weight = 1 / self.data.n_examples * \
-                    np.dot(lay.d_linear, lay_prev.activation.T)
+
+                lay.d_weight = 1 / self.data.n_examples \
+                    * np.dot(lay.d_linear, lay_prev.activation.T)
+                lay.vd_weight = lay.adam_beta_1 * lay.vd_weight \
+                    + (1 - lay.adam_beta_1) * lay.d_weight
+                lay.sd_weight = lay.adam_beta_2 * lay.sd_weight \
+                    + (1 - lay.adam_beta_2) * (lay.d_weight ** 2)
+
                 lay.d_bias = 1 / self.data.n_examples * \
                     np.sum(lay.d_linear, axis=1, keepdims=True)
+                lay.vd_bias = lay.adam_beta_1 * lay.vd_bias \
+                    + (1 - lay.adam_beta_1) * lay.d_bias
+                lay.sd_bias = lay.adam_beta_2 * lay.sd_bias \
+                    + (1 - lay.adam_beta_2) * (lay.d_bias ** 2)
+
                 if idx >= 2:
                     lay_prev.d_activation = np.dot(lay.weight.T, lay.d_linear)
+
                     lay_prev.d_linear = np.multiply(
                         lay_prev.d_activation, lay_prev.derivate())
 
@@ -329,9 +351,15 @@ class BinaryClassifierNetwork(object):
         '''update_weights'''
         for idx, lay in enumerate(self.layers_list):
             if isinstance(lay, Layer) and idx >= 1:
-                lay.d_weight += lambd / self.data.n_examples * lay.weight
-                lay.weight -= learn_rate * lay.d_weight
-                lay.bias -= learn_rate * lay.d_bias
+                regularizer = lambd / self.data.n_examples * lay.weight
+                # update_weight = regularizer + lay.d_weight
+                # update_bias = lay.d_bias
+                update_weight = regularizer \
+                    + lay.vd_weight / (np.sqrt(lay.sd_weight) + lay.adam_eps)
+                update_bias \
+                    = lay.vd_bias / (np.sqrt(lay.sd_bias) + lay.adam_eps)
+                lay.weight = lay.weight - learn_rate * update_weight
+                lay.bias = lay.bias - learn_rate * update_bias
 
     def calc_cost(self):
         '''calc_cost'''
@@ -341,105 +369,72 @@ class BinaryClassifierNetwork(object):
         probabilities = self.layers_list[-1].activation
         real_labels = self.data.labels
 
-        val = np.multiply(real_labels, np.log(probabilities))
+        # prevent np.log(0) -> -inf
+        probabilities -= 1e-10 * (probabilities == 1)
+        probabilities += 1e-10 * (probabilities == 0)
 
+        val = np.multiply(real_labels, np.log(probabilities))
         if self.layers_list[-1].activ_name == 'sigmoid':
             val += np.multiply((1 - real_labels), np.log(1 - probabilities))
-
         assert val.shape == (real_labels.shape[0], real_labels.shape[1])
-
         val = np.sum(val, axis=0, keepdims=True)
         assert val.shape == (1, real_labels.shape[1])
-
         val = -np.mean(val, axis=1, keepdims=True)
         assert val.shape == (1, 1)
-
         cost = val.item()
-
         return cost
 
-    def train(self, input_data, epochs, learn_rate, learn_decay, lambd):
+    def train(self, learn_rate, lambd):
         '''train'''
-        cost_list = list()
+        self.forward_prop()
+        cost = self.calc_cost()
+        self.backward_prop()
+        self.update_weights(learn_rate, lambd)
+        # if cost_array.shape[0] >= 2:
+        #     assert(cost_array[-1, 0] <= cost_array[-2, 0])
+        return cost
 
-        self.reset_network()
-        self.load_data(input_data)
-
-        for epoch in range(epochs + 1):
-            try:
-                learn_rate_loc = learn_rate / (1 + epoch * learn_decay)
-
-                self.forward_prop()
-                cost = self.calc_cost()
-                self.backward_prop()
-                self.update_weights(learn_rate_loc, lambd)
-
-                if epoch == 0 or epoch % 1000 == 0:
-                    cost_list.append(cost)
-                    print("Epoch {} cost: {}".format(epoch, cost))
-
-                # if cost_array.shape[0] >= 2:
-                #     assert(cost_array[-1, 0] <= cost_array[-2, 0])
-            except KeyboardInterrupt:
-                break
-
-        return cost_list
-
-    def reset_network(self):
-        '''reset all weights and biases'''
-        for item in self.layers_list:
-            if isinstance(item, Layer):
-                item.reset_weights()
-
-    def predict(self, input_data, threshold=0.5):
+    def predict(self, input_data):
         '''
         predict
         input_data : Data
         threshold : float, betweeen 0 and 1
         '''
-        if not isinstance(input_data, Data):
+        if not isinstance(input_data, DataInNetwork):
             raise ValueError('Pass Data object')
 
         self.load_data(input_data)
         self.forward_prop()
         probabilities = self.layers_list[-1].activation
-        predictions = np.array(probabilities >= threshold, dtype=np.int32)
-
+        predictions = self.softmax_to_category(probabilities)
         return predictions
 
     @staticmethod
-    def softmax_to_category(predictions):
+    def softmax_to_category(probabilities):
         '''
         convert from softmax vector output to int
-        https://stackoverflow.com/questions/42497340/how-to-convert-one-hot-encodings-into-integers
+        https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.argmax.html
         '''
-        return np.argmax(predictions == 1, axis=0).reshape(1, predictions.shape[1])
+        return np.argmax(probabilities, axis=0).reshape(1, probabilities.shape[1])
 
-    def predict_and_compare(self, input_data, threshold=0.5):
+    def predict_and_compare(self, input_data):
         '''
         predict_and_compare
         input_data : Data
         threshold : float, betweeen 0 and 1
         '''
-        if not isinstance(input_data, Data):
+        if not isinstance(input_data, DataInNetwork):
             raise ValueError('Pass Data object')
 
-        predictions = self.predict(input_data, threshold)
+        predictions = self.predict(input_data)
         prediction_metrics = self.__calc_prediction_metrics(
             predictions=predictions,
             dataset=input_data
         )
-        prediction_metrics[input_data.dataset_name + '_cost'] \
-            = self.calc_cost()
-
-        print("\nResults for the \"{}\" dataset".format(input_data.dataset_name))
-        for key, value in prediction_metrics.items():
-            print(str(key) + " : " + str(value))
-
+        prediction_metrics['cost'] = self.calc_cost()
         return predictions, prediction_metrics
 
-    @staticmethod
-    def __calc_prediction_metrics(predictions, dataset):
+    def __calc_prediction_metrics(self, predictions, dataset):
         '''
         calc_prediction_metrics
         predictions : numpy.ndarray
@@ -447,30 +442,16 @@ class BinaryClassifierNetwork(object):
         '''
         assert isinstance(dataset.labels, np.ndarray)
 
-        # true_positives = np.sum(predictions + dataset.labels == 2, axis=1)
-        # true_negatives = np.sum(predictions + dataset.labels == 0, axis=1)
-        # false_positives = np.sum(predictions - dataset.labels == 1, axis=1)
-        # false_negatives = np.sum(predictions - dataset.labels == -1, axis=1)
-
-        # accuracy = (true_positives + true_negatives) / dataset.labels.shape[1]
-        # precision = true_positives / (true_positives + false_positives)
-        # recall = true_positives / (true_positives + false_negatives)
-        # f1score = 2 * precision * recall / (precision + recall)
-
-        correct = np.sum(
-            np.amax(predictions + dataset.labels, axis=0, keepdims=True) == 2,
-            axis=1
+        correct_labels = self.softmax_to_category(dataset.labels)
+        total_correct = np.sum(
+            predictions == correct_labels,
+            axis=1,
+            keepdims=True,
         )
-
-        accuracy = correct / dataset.n_examples
-
+        accuracy = float(total_correct / predictions.shape[1])
         prediction_metrics = {
-            dataset.dataset_name + '_accuracy': accuracy,
-            # dataset.dataset_name + '_precision': precision,
-            # dataset.dataset_name + '_recall': recall,
-            # dataset.dataset_name + '_f1score': f1score,
+            'accuracy': accuracy,
         }
-
         return prediction_metrics
 
     @classmethod
@@ -484,10 +465,8 @@ class BinaryClassifierNetwork(object):
             '''calc_activation_eps'''
             testnet.layers_list[1].weight = theta_with_eps[:, :-1]  # weights
             testnet.layers_list[1].bias = theta_with_eps[:, [-1]]  # bias
-
             testnet.forward_prop()
             cost = testnet.calc_cost()
-
             return cost
 
         print("\nPerforming gradient check")
@@ -499,7 +478,7 @@ class BinaryClassifierNetwork(object):
         examples = np.random.randn(4, 5)
         labels = np.random.randn(1, 5)
 
-        testnet.load_data(Data(
+        testnet.load_data(DataInNetwork(
             dataset_name='grad_check',
             features=examples,
             labels=labels
