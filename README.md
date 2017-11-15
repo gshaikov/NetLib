@@ -2,28 +2,32 @@
 
 ## Practicing Neural Networks
 
-This is my binary classifier network API, for fun.
+This is my Neural Network API built only using Numpy, for practice.
 
 Tested on a classic hand-written digit dataset.
 
 ## Structure
+
 - ``main.py`` is the main file
 - ``myneuralnetapi.py`` is the neural network API module
 
-## Test
-Layers in the network:
-layer 0: input, units: 2
-layer 1: hidden, units: 10
-layer 2: hidden, units: 10
-layer 3: hidden, units: 10
-layer 4: hidden, units: 10
-layer 5: output, units: 4
+## Testing the network
 
-epochs = 30000
+Testing the network using ```network_test.py``` with dummy data with 2 features for easy visualization. Plots below illustrate that the network does what it's supposed to do. Accuracy is 99.9%, due to overlapping classes.
 
-learn_rate = 0.01
-learn_decay = 1 / 5000 * 0
+![blobs](test_results/data.png)
+![learned boundaries](test_results/boundaries.png)
+![cost per iteration](test_results/cost.png)
 
-lambd = 1.0 * 1
-threshold = 0.5
+> **Training Parameters**
+> - epochs = 10000
+> - learn_rate = 0.001
+> - lambd_val = 300.0
 
+> **Layers in the network**
+> - layer 0: input, units: 2
+> - layer 1: hidden, units: 10
+> - layer 2: hidden, units: 10
+> - layer 3: hidden, units: 10
+> - layer 4: hidden, units: 10
+> - layer 5: output, units: 4
