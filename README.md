@@ -26,8 +26,8 @@ Testing the network using ```network_test.py``` with dummy data with 2 features 
 
 > **Layers in the network**
 > - layer 0: input, units: 2
-> - layer 1: hidden, units: 10
-> - layer 2: hidden, units: 10
-> - layer 3: hidden, units: 10
-> - layer 4: hidden, units: 10
-> - layer 5: output, units: 4
+> - layer 1: relu, units: 10
+> - layer 2: relu, units: 10
+> - layer 3: relu, units: 10
+> - layer 4: relu, units: 10
+> - layer 5: softmax, units: 4
