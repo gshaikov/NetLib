@@ -217,6 +217,7 @@ def _main():
         plt.plot(costs_run_table['cost_dev'])
         plt.legend(['cost_train', 'cost_dev'])
         plt.title('Costs (epoch)')
+        # https://stackoverflow.com/questions/9622163/save-plot-to-image-file-instead-of-displaying-it-using-matplotlib
         fig.savefig('results/costs_epoch.png')
         plt.show()
 
