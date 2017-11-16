@@ -4,5 +4,5 @@
     "learning_rate": 0.0001,
     "lambda_reg": 3000.0,
     "generate_predictions": 1,
-    "load_parameters": 1
+    "load_parameters": 0
 }
