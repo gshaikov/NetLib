@@ -163,6 +163,7 @@ def _main():
                 ax2.set_title("dev [0]")
 
                 plt.show()
+                plt.close(fig)
 
                 cost_train_epoch = 0
                 number_of_iterations = len(train_batches)
@@ -220,6 +221,7 @@ def _main():
         # https://stackoverflow.com/questions/9622163/save-plot-to-image-file-instead-of-displaying-it-using-matplotlib
         fig.savefig('results/costs_epoch.png')
         plt.show()
+        plt.close(fig)
 
         fig = plt.figure()
         plt.plot(costs_run_table['accuracy_train'])
@@ -228,6 +230,7 @@ def _main():
         plt.title('Accuracy (epoch)')
         fig.savefig('results/accuracy_epoch.png')
         plt.show()
+        plt.close(fig)
 
     #%% Final model evaluation
 
@@ -276,10 +279,11 @@ def _main():
         predictions_test_df['ImageId'] += 1
 
         for idx, row in predictions_test_df.head(10).iterrows():
-            plt.figure()
+            fig = plt.figure()
             plt.imshow(
                 test_features_array[:, idx].reshape((28, 28)), cmap='gray')
             plt.show()
+            plt.close(fig)
             print("predicted: {}\n".format(row['Label']))
 
         predictions_test_df.to_csv(
