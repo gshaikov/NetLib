@@ -1,6 +1,6 @@
 # NetAPI
 
-This is a Neural Network (multilayer perceptron) with my custom-built API ``myneuralnetapi.py``. Tested on a classic MNIST dataset. Dataset is taken from here: [Kaggle MNIST competition](https://www.kaggle.com/c/digit-recognizer/data)
+This is a Neural Network (multilayer perceptron) with my custom-built API ``myneuralnetapi.py``. Tested on a classic MNIST dataset. The dataset is taken from here: [Kaggle MNIST competition](https://www.kaggle.com/c/digit-recognizer/data)
 
 ***Note: I built whole API using only Numpy library. For practice.***
 
@@ -22,7 +22,7 @@ Implemented:
 
 ## Performance on MNIST dataset
 
-The network was trained for a short time on a MNIST dataset to demonstrate its performance. The full implementation is in ```network_main.py```.
+The network was trained on AWS instance for a short time using the MNIST dataset to demonstrate its performance. The full implementation is in ```network_main.py```.
 
 > **Results**
 > - Train accuracy: 100.00%
