@@ -40,8 +40,8 @@ The network was trained for a short time on a MNIST dataset to demonstrate its p
 > - layer 5: relu, units: 25
 > - layer 6: softmax, units: 10
 
-![cost per iteration](results/costs_epoch.png)
-![accuracy per iteration](results/accuracy_epoch.png)
+<img src="results/costs_epoch.png" width="400">
+<img src="results/accuracy_epoch.png" width="400">
 
 ## Testing the network
 
