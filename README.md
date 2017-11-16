@@ -29,7 +29,7 @@ The network was trained for a short time on a MNIST dataset to demonstrate its p
 > - Dev accuracy:    97.95%
 > - Test accuracy:   97.33%
 >
-> *Looking at results, it's obvious that the model has some variance. Reducing this variance is outside the scope of this exercise and is addressed using CNNs with Tensorflow in another repo.*
+> *Looking at results, it's obvious that the model has some **variance**. Reducing this variance is outside the scope of this exercise and is addressed using CNNs with Tensorflow in another repo.*
 
 > **Layers in the network**
 > - layer 0: input, units: 784 (grayscale images 28 x 28)
