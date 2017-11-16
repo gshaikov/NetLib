@@ -17,6 +17,8 @@ Implemented:
 * ``myneuralnetapi.py`` - neural network API module
 * ``network_main.py``   - the main network which is trained on MNIST dataset
 * ``network_test.py``   - testing the network using dummy data, vizualizing the boundaries
+* ``datahandler.py``    - a class to handle MNIST data and feed minibatches into the neural network
+* ``run_params.json``   - run mode parameters for ``network_main.py``
 
 ## Performance on MNIST dataset
 
@@ -36,9 +38,9 @@ The network was trained for a short time on a MNIST dataset to demonstrate its p
 > - layer 5: relu, units: 25
 > - layer 6: softmax, units: 10
 
-![blobs](test_results/data.png)
-![learned boundaries](test_results/boundaries.png)
-![cost per iteration](test_results/cost.png)
+<!-- ![blobs](test_results/data.png) -->
+<!-- ![learned boundaries](test_results/boundaries.png) -->
+<!-- ![cost per iteration](test_results/cost.png) -->
 
 ## Testing the network
 

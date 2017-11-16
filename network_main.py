@@ -38,9 +38,10 @@ def load_model(filename):
 
 def _main():
     print('Neural Network App')
-    
+
     #%% Load run mode parameters
 
+    # https://stackoverflow.com/questions/2835559/parsing-values-from-a-json-file
     with open('run_params.json', 'rb') as jsonfile:
         run_params = json.load(jsonfile)
 
