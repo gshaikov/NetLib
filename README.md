@@ -24,10 +24,12 @@ Implemented:
 
 The network was trained for a short time on a MNIST dataset to demonstrate its performance. The full implementation is in ```network_main.py```.
 
+Looking at results, it's obvious that the model has some variance. Reducing this variance is outside the scope of this exercise and is addressed using CNNs with Tensorflow in another repo. 
+
 > **Results**
 > - Train accuracy: 100.00%
-> - Dev accuracy:   ...
-> - Test accuracy:  ...
+> - Dev accuracy:    97.95%
+> - Test accuracy:   97.33%
 >
 > **Layers in the network**
 > - layer 0: input, units: 784 (grayscale images 28 x 28)
@@ -38,9 +40,8 @@ The network was trained for a short time on a MNIST dataset to demonstrate its p
 > - layer 5: relu, units: 25
 > - layer 6: softmax, units: 10
 
-<!-- ![blobs](test_results/data.png) -->
-<!-- ![learned boundaries](test_results/boundaries.png) -->
-<!-- ![cost per iteration](test_results/cost.png) -->
+![cost per iteration](results/costs_epoch.png)
+![accuracy per iteration](results/accuracy_epoch.png)
 
 ## Testing the network
 
