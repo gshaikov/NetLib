@@ -44,6 +44,12 @@ class Layer(object):
         elif not (isinstance(n_connections, int) or n_connections > 0):
             raise ValueError
 
+        self.layer_name = layer_name
+        self.activ_name = activ_name
+
+        self.n_units = n_units
+        self.n_connections = n_connections
+
         self.weight = None
         self.bias = None
 
@@ -61,12 +67,6 @@ class Layer(object):
         self.sd_weight = None
         self.vd_bias = None
         self.sd_bias = None
-
-        self.layer_name = layer_name
-        self.activ_name = activ_name
-
-        self.n_units = n_units
-        self.n_connections = n_connections
 
         self.reset_weights()
 
