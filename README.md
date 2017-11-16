@@ -1,28 +1,48 @@
 # NetAPI
 
-## Practicing Neural Networks
+This is a Neural Network (multilayer perceptron) with my custom-built API ``myneuralnetapi.py``. Tested on a classic MNIST dataset. Dataset is taken from here: [Kaggle MNIST competition](https://www.kaggle.com/c/digit-recognizer/data)
 
-This is my Neural Network API built only using Numpy, for practice.
+***Note: I built whole API using only Numpy library. For practice.***
 
-Tested on a classic hand-written digit dataset.
+Implemented:
+
+* forward/backward propagation
+* batch gradient descent
+* Adam optimization
+* L2-regularization
+* gradient checking
 
 ## Structure
 
-- ``main.py`` is the main file
-- ``myneuralnetapi.py`` is the neural network API module
+* ``myneuralnetapi.py`` - neural network API module
+* ``network_main.py``   - the main network which is trained on MNIST dataset
+* ``network_test.py``   - testing the network using dummy data, vizualizing the boundaries
 
-## Testing the network
+## Performance on MNIST dataset
 
-Testing the network using ```network_test.py``` with dummy data with 2 features for easy visualization. Plots below illustrate that the network does what it's supposed to do. Accuracy is 99.9%, due to overlapping classes.
+The network was trained for a short time on a MNIST dataset to demonstrate its performance. The full implementation is in ```network_main.py```.
+
+> **Results**
+> - Train accuracy: 100.00%
+> - Dev accuracy:   ...
+> - Test accuracy:  ...
+>
+> **Layers in the network**
+> - layer 0: input, units: 784 (grayscale images 28 x 28)
+> - layer 1: relu, units: 400
+> - layer 2: relu, units: 200
+> - layer 3: relu, units: 100
+> - layer 4: relu, units: 50
+> - layer 5: relu, units: 25
+> - layer 6: softmax, units: 10
 
 ![blobs](test_results/data.png)
 ![learned boundaries](test_results/boundaries.png)
 ![cost per iteration](test_results/cost.png)
 
-> **Training Parameters**
-> - epochs = 10000
-> - learn_rate = 0.001
-> - lambd_val = 300.0
+## Testing the network
+
+Network testing is implemented in ```network_test.py``` with dummy data with 2 features for easy visualization. Plots below illustrate that the network does what it's supposed to do. Accuracy is **99.9%** due to overlapping classes.
 
 > **Layers in the network**
 > - layer 0: input, units: 2
@@ -31,3 +51,7 @@ Testing the network using ```network_test.py``` with dummy data with 2 features 
 > - layer 3: relu, units: 10
 > - layer 4: relu, units: 10
 > - layer 5: softmax, units: 4
+
+![blobs](test_results/data.png)
+![learned boundaries](test_results/boundaries.png)
+![cost per iteration](test_results/cost.png)
