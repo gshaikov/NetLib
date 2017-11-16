@@ -19,21 +19,29 @@ import matplotlib.pyplot as plt
 
 
 # https://stackoverflow.com/questions/4529815/saving-an-object-data-persistence
-def save_model(model, filename):
-    '''save_model'''
-    model.load_data(DataInNetwork(
-        features=np.array([[1, 2]]),
-        labels=np.array([[1, 2]])
-    ))
+def save_parameters(model, filename):
+    '''save_parameters'''
+    layers = model.layers_list
+    parameters = dict()
+    for idx, lay in enumerate(layers):
+        if isinstance(lay, Layer):  # skip input layer
+            parameters['layer_' + str(idx)] = {
+                'layer_name': lay.layer_name,
+                'activ_name': lay.activ_name,
+                'n_units': lay.n_units,
+                'n_connections': lay.n_connections,
+                'weight': lay.weight,
+                'bias': lay.bias,
+            }
     with open(filename, 'wb') as outputfile:
-        pickle.dump(model, outputfile, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(parameters, outputfile, pickle.HIGHEST_PROTOCOL)
 
 
-def load_model(filename):
-    '''load_model'''
+def load_parameters(filename):
+    '''load_parameters'''
     with open(filename, 'rb') as inputfile:
-        model = pickle.load(inputfile)
-    return model
+        parameters = pickle.load(inputfile)
+    return parameters
 
 
 def _main():
@@ -52,23 +60,32 @@ def _main():
 
     BinaryClassifierNetwork.grad_check()
 
-    if not params_mode['load_model']:
+    net = BinaryClassifierNetwork()
+    net.add_input(Input(features_size))
+
+    if not params_mode['load_parameters']:
         print("\nCreating the model...")
-        net = BinaryClassifierNetwork()
-
-        net.add_input(Input(features_size))
-
         net.add_layer(Layer('hidden', 'relu', 400, features_size))
         net.add_layer(Layer('hidden', 'relu', 200, 400))
         net.add_layer(Layer('hidden', 'relu', 100, 200))
         net.add_layer(Layer('hidden', 'relu', 50, 100))
         net.add_layer(Layer('hidden', 'relu', 25, 50))
-
         net.add_output(Layer('output', 'softmax', labels_size, 25))
 
     else:
         print("\nLoading the model...")
-        net = load_model('tmp/network_model_00.pkl')
+        parameters = load_parameters('tmp/network_parameters_00.pkl')
+        for layer_no, params in parameters.items():
+            print("Loading {}, with {}".format(
+                layer_no, params['activ_name']))
+            net.add_layer(Layer(
+                params['layer_name'],
+                params['activ_name'],
+                params['n_units'],
+                params['n_connections'],
+            ))
+            net.layers_list[-1].weight = params['weight']
+            net.layers_list[-1].bias = params['bias']
 
     net.show_network()
 
@@ -111,22 +128,23 @@ def _main():
         'accuracy_dev',
     ])
 
-    net.reset_network()
+    if not params_mode['load_parameters']:
 
-    costs_run_table = pd.DataFrame(columns=[
-        'cost_train',
-        'accuracy_train',
-        'cost_dev',
-        'accuracy_dev',
-    ])
+        costs_run_table = pd.DataFrame(columns=[
+            'cost_train',
+            'accuracy_train',
+            'cost_dev',
+            'accuracy_dev',
+        ])
 
-    try:
-        for epoch in range(1, epochs + 1):
+        net.reset_network()
 
-            dataset.shuffle_train()
-            train_batches = dataset.get_train_batches(minibatches_size)
+        try:
+            for epoch in range(1, epochs + 1):
 
-            if params_mode['enable_plots']:
+                dataset.shuffle_train()
+                train_batches = dataset.get_train_batches(minibatches_size)
+
                 # https://stackoverflow.com/questions/25239933/how-to-add-title-to-subplots-in-matplotlib
                 # https://stackoverflow.com/questions/3823752/display-image-as-grayscale-using-matplotlib
                 # https://stackoverflow.com/questions/39659998/using-pyplot-to-create-grids-of-plots
@@ -146,68 +164,71 @@ def _main():
 
                 plt.show()
 
-            cost_train_epoch = 0
-            number_of_iterations = len(train_batches)
+                cost_train_epoch = 0
+                number_of_iterations = len(train_batches)
 
-            for examples_features, examples_labels in train_batches:
+                for examples_features, examples_labels in train_batches:
 
-                dataset_train_batch = DataInNetwork(
-                    features=examples_features,
-                    labels=examples_labels,
-                )
-                net.load_data(dataset_train_batch)
+                    dataset_train_batch = DataInNetwork(
+                        features=examples_features,
+                        labels=examples_labels,
+                    )
+                    net.load_data(dataset_train_batch)
 
-                # train routine
-                cost_train_batch = net.train(
-                    learn_rate=learn_rate,
-                    lambd=lambd_val,
-                )
+                    # train routine
+                    cost_train_batch = net.train(
+                        learn_rate=learn_rate,
+                        lambd=lambd_val,
+                    )
 
-                cost_train_epoch += cost_train_batch / number_of_iterations
+                    cost_train_epoch += cost_train_batch / number_of_iterations
 
-            predictions, prediction_metrics_train \
-                = net.predict_and_compare(dataset_train)
+                predictions, prediction_metrics_train \
+                    = net.predict_and_compare(dataset_train)
 
-            net.load_data(dataset_dev)
-            net.forward_prop()
-            cost_dev_epoch = net.calc_cost()
+                net.load_data(dataset_dev)
+                net.forward_prop()
+                cost_dev_epoch = net.calc_cost()
 
-            predictions, prediction_metrics_dev \
-                = net.predict_and_compare(dataset_dev)
+                predictions, prediction_metrics_dev \
+                    = net.predict_and_compare(dataset_dev)
 
-            costs_run_table = costs_run_table.append({
-                'epoch': epoch,
-                'cost_train': cost_train_epoch,
-                'accuracy_train': prediction_metrics_train['accuracy'] * 100,
-                'cost_dev': cost_dev_epoch,
-                'accuracy_dev': prediction_metrics_dev['accuracy'] * 100,
-            }, ignore_index=True)
+                costs_run_table = costs_run_table.append({
+                    'epoch': epoch,
+                    'cost_train': cost_train_epoch,
+                    'accuracy_train': prediction_metrics_train['accuracy'] * 100,
+                    'cost_dev': cost_dev_epoch,
+                    'accuracy_dev': prediction_metrics_dev['accuracy'] * 100,
+                }, ignore_index=True)
 
-            print(
-                "epoch {}; cost train {:5.4f}, dev {:5.4f}; acc train {:6.4f}%, dev {:6.4f}%".format(
-                    epoch,
-                    cost_train_epoch,
-                    cost_dev_epoch,
-                    prediction_metrics_train['accuracy'] * 100,
-                    prediction_metrics_dev['accuracy'] * 100))
+                print(
+                    "epoch {}; cost train {:5.4f}, dev {:5.4f}; acc train {:6.4f}%, dev {:6.4f}%".format(
+                        epoch,
+                        cost_train_epoch,
+                        cost_dev_epoch,
+                        prediction_metrics_train['accuracy'] * 100,
+                        prediction_metrics_dev['accuracy'] * 100))
 
-    except KeyboardInterrupt:
-        pass
+        except KeyboardInterrupt:
+            pass
 
-    if params_mode['enable_plots']:
-        plt.figure()
+        fig = plt.figure()
         plt.plot(costs_run_table['cost_train'])
         plt.plot(costs_run_table['cost_dev'])
         plt.legend(['cost_train', 'cost_dev'])
         plt.title('Costs (epoch)')
+        fig.savefig('results/costs_epoch.png')
         plt.show()
 
-        plt.figure()
+        fig = plt.figure()
         plt.plot(costs_run_table['accuracy_train'])
         plt.plot(costs_run_table['accuracy_dev'])
         plt.legend(['accuracy_train', 'accuracy_dev'])
         plt.title('Accuracy (epoch)')
+        fig.savefig('results/accuracy_epoch.png')
         plt.show()
+
+    #%% Final model evaluation
 
     predictions, prediction_metrics_train \
         = net.predict_and_compare(dataset_train)
@@ -267,8 +288,9 @@ def _main():
 
     #%% Save the model
 
-    print("Saving the model...")
-    save_model(net, 'tmp/network_model_00.pkl')
+    if not params_mode['load_parameters']:
+        print("Saving the model...")
+        save_parameters(net, 'tmp/network_parameters_00.pkl')
 
 
 #%%
