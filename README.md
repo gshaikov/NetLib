@@ -40,8 +40,10 @@ The network was trained for a short time on a MNIST dataset to demonstrate its p
 > - layer 5: relu, units: 25
 > - layer 6: softmax, units: 10
 
+<div>
 <img src="results/costs_epoch.png" width="400">
 <img src="results/accuracy_epoch.png" width="400">
+</div>
 
 ## Testing the network
 
