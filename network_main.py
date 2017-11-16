@@ -149,19 +149,16 @@ def _main():
                 # https://stackoverflow.com/questions/3823752/display-image-as-grayscale-using-matplotlib
                 # https://stackoverflow.com/questions/39659998/using-pyplot-to-create-grids-of-plots
                 fig = plt.figure()
-
                 ax1 = fig.add_subplot(1, 2, 1)
                 digits_train_example = train_batches[0][0][:, 0]
                 ax1.imshow(digits_train_example.reshape(
                     (28, 28)), cmap='gray')
                 ax1.set_title("train [0]")
-
                 ax2 = fig.add_subplot(1, 2, 2)
                 digits_train_example = dataset.dev_features[:, 0]
                 ax2.imshow(digits_train_example.reshape(
                     (28, 28)), cmap='gray')
                 ax2.set_title("dev [0]")
-
                 plt.show()
                 plt.close(fig)
 
