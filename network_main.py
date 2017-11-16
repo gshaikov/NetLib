@@ -42,8 +42,8 @@ def _main():
     #%% Load run mode parameters
 
     # https://stackoverflow.com/questions/2835559/parsing-values-from-a-json-file
-    with open('run_params.json', 'rb') as jsonfile:
-        run_params = json.load(jsonfile)
+    with open('params_mode.json', 'rb') as jsonfile:
+        params_mode = json.load(jsonfile)
 
     #%% Build the network
 
@@ -52,7 +52,7 @@ def _main():
 
     BinaryClassifierNetwork.grad_check()
 
-    if not run_params['load_model']:
+    if not params_mode['load_model']:
         print("\nCreating the model...")
         net = BinaryClassifierNetwork()
 
@@ -93,12 +93,10 @@ def _main():
 
     #%% Hyperparameters
 
-    epochs = 200
-    minibatches_size = 2048
-
-    learn_rate = 0.0001
-
-    lambd_val = 3000.0
+    epochs = params_mode['epochs']
+    minibatches_size = params_mode['minibatches_size']
+    learn_rate = params_mode['learning_rate']
+    lambd_val = params_mode['lambda_reg']
 
     #%% Train the network
 
@@ -128,7 +126,7 @@ def _main():
             dataset.shuffle_train()
             train_batches = dataset.get_train_batches(minibatches_size)
 
-            if run_params['enable_plots']:
+            if params_mode['enable_plots']:
                 # https://stackoverflow.com/questions/25239933/how-to-add-title-to-subplots-in-matplotlib
                 # https://stackoverflow.com/questions/3823752/display-image-as-grayscale-using-matplotlib
                 # https://stackoverflow.com/questions/39659998/using-pyplot-to-create-grids-of-plots
@@ -196,7 +194,7 @@ def _main():
     except KeyboardInterrupt:
         pass
 
-    if run_params['enable_plots']:
+    if params_mode['enable_plots']:
         plt.figure()
         plt.plot(costs_run_table['cost_train'])
         plt.plot(costs_run_table['cost_dev'])
@@ -237,7 +235,7 @@ def _main():
 
     #%% Generate predictions
 
-    if run_params['generate_predictions']:
+    if params_mode['generate_predictions']:
 
         input("Press Enter to Predict...")
 
