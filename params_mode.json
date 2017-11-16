@@ -4,6 +4,5 @@
     "learning_rate": 0.0001,
     "lambda_reg": 3000.0,
     "generate_predictions": 1,
-    "enable_plots": 1,
-    "load_model": 0
+    "load_parameters": 1
 }
