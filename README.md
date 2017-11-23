@@ -23,7 +23,7 @@ Implemented:
 
 ## Performance on MNIST dataset
 
-The network was trained on AWS instance for a short time using the MNIST dataset to demonstrate its performance. The full implementation is in ```network_main.py```.
+The network was trained on AWS instance for a short time using the MNIST dataset to demonstrate that it works. The full implementation is in ```network_main.py```.
 
 > **Results**
 > - Train accuracy: 100.00%
