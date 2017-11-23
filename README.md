@@ -13,7 +13,7 @@ Implemented:
 * L2-regularization
 * gradient checking
 
-## Structure
+## Folder structure
 
 * ``myneuralnetapi.py`` - neural network API module
 * ``network_main.py``   - the main network which is trained on MNIST dataset
