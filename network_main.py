@@ -15,6 +15,8 @@ from datahandler import DataContainer
 import numpy as np
 import pandas as pd
 
+import IPython.display
+
 import matplotlib.pyplot as plt
 
 
@@ -162,10 +164,9 @@ def _main():
                 plt.show()
                 plt.close(fig)
 
-                cost_train_epoch = 0
                 number_of_iterations = len(train_batches)
 
-                for examples_features, examples_labels in train_batches:
+                for idx, (examples_features, examples_labels) in enumerate(train_batches):
 
                     dataset_train_batch = DataInNetwork(
                         features=examples_features,
@@ -174,38 +175,36 @@ def _main():
                     net.load_data(dataset_train_batch)
 
                     # train routine
-                    cost_train_batch = net.train(
-                        learn_rate=learn_rate,
-                        lambd=lambd_val,
-                    )
+                    net.train(learn_rate=learn_rate, lambd=lambd_val)
 
-                    cost_train_epoch += cost_train_batch / number_of_iterations
+                    _, prediction_metrics_train \
+                        = net.predict_and_compare(dataset_train)
 
-                predictions, prediction_metrics_train \
-                    = net.predict_and_compare(dataset_train)
+                    IPython.display.clear_output(wait=True)
+                    print("epoch {:3d}, minibatch {:4d}/{:4d}, train cost {:5.4f}, acc {:6.4f}%".format(
+                        epoch, idx, number_of_iterations,
+                        prediction_metrics_train['cost'],
+                        prediction_metrics_train['accuracy'] * 100,
+                    ), end="\r")
 
-                net.load_data(dataset_dev)
-                net.forward_prop()
-                cost_dev_epoch = net.calc_cost()
-
-                predictions, prediction_metrics_dev \
+                _, prediction_metrics_dev \
                     = net.predict_and_compare(dataset_dev)
 
                 costs_run_table = costs_run_table.append({
                     'epoch': epoch,
-                    'cost_train': cost_train_epoch,
+                    'cost_train': prediction_metrics_train['cost'],
                     'accuracy_train': prediction_metrics_train['accuracy'] * 100,
-                    'cost_dev': cost_dev_epoch,
+                    'cost_dev': prediction_metrics_dev['cost'],
                     'accuracy_dev': prediction_metrics_dev['accuracy'] * 100,
                 }, ignore_index=True)
 
-                print(
-                    "epoch {}; cost train {:5.4f}, dev {:5.4f}; acc train {:6.4f}%, dev {:6.4f}%".format(
-                        epoch,
-                        cost_train_epoch,
-                        cost_dev_epoch,
-                        prediction_metrics_train['accuracy'] * 100,
-                        prediction_metrics_dev['accuracy'] * 100))
+                print("epoch {:3d}; cost train {:5.4f}, dev {:5.4f}; acc train {:6.4f}%, dev {:6.4f}%".format(
+                    epoch,
+                    prediction_metrics_train['cost'],
+                    prediction_metrics_dev['cost'],
+                    prediction_metrics_train['accuracy'] * 100,
+                    prediction_metrics_dev['accuracy'] * 100,
+                ))
 
         except KeyboardInterrupt:
             pass
@@ -231,9 +230,9 @@ def _main():
 
     #%% Final model evaluation
 
-    predictions, prediction_metrics_train \
+    _, prediction_metrics_train \
         = net.predict_and_compare(dataset_train)
-    predictions, prediction_metrics_dev \
+    _, prediction_metrics_dev \
         = net.predict_and_compare(dataset_dev)
 
     print("Final accuracy\ntrain: {:6.4f}%\ndev:   {:6.4f}%".format(
