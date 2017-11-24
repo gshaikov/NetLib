@@ -177,15 +177,19 @@ def _main():
                     # train routine
                     net.train(learn_rate=learn_rate, lambd=lambd_val)
 
-                    _, prediction_metrics_train \
-                        = net.predict_and_compare(dataset_train)
+                    _, prediction_metrics_train_batch \
+                        = net.predict_and_compare(dataset_train_batch)
 
-                    IPython.display.clear_output(wait=True)
-                    print("epoch {:3d}, minibatch {:4d}/{:4d}, train cost {:5.4f}, acc {:6.4f}%".format(
-                        epoch, idx, number_of_iterations,
-                        prediction_metrics_train['cost'],
-                        prediction_metrics_train['accuracy'] * 100,
-                    ), end="\r")
+                    if idx % 10 == 0:
+                        IPython.display.clear_output(wait=True)
+                        print("epoch {:3d}, minibatch {:4d}/{:4d}, cost {:5.4f}, acc {:6.4f}%".format(
+                            epoch, idx + 1, number_of_iterations,
+                            prediction_metrics_train_batch['cost'],
+                            prediction_metrics_train_batch['accuracy'] * 100,
+                        ), end="\r")
+
+                _, prediction_metrics_train \
+                    = net.predict_and_compare(dataset_train)
 
                 _, prediction_metrics_dev \
                     = net.predict_and_compare(dataset_dev)
@@ -198,7 +202,7 @@ def _main():
                     'accuracy_dev': prediction_metrics_dev['accuracy'] * 100,
                 }, ignore_index=True)
 
-                print("epoch {:3d}; cost train {:5.4f}, dev {:5.4f}; acc train {:6.4f}%, dev {:6.4f}%".format(
+                print("\nepoch {:3d}; cost train {:5.4f}, dev {:5.4f}; acc train {:6.4f}%, dev {:6.4f}%".format(
                     epoch,
                     prediction_metrics_train['cost'],
                     prediction_metrics_dev['cost'],
