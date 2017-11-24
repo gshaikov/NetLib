@@ -175,7 +175,7 @@ class DataInNetwork(object):
                  labels=np.array([[]]),
                  no_labels=False):
         assert isinstance(features, np.ndarray)
-        assert features.shape[0] <= features.shape[1]
+        # assert features.shape[0] <= features.shape[1]
 
         self.dataset_name = dataset_name
         self.features = features
