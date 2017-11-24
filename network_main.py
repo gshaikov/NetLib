@@ -67,7 +67,8 @@ def _main():
 
     if not params_mode['load_parameters']:
         print("\nCreating the model...")
-        net.add_layer(Layer('hidden', 'relu', 400, features_size))
+        net.add_layer(Layer('hidden', 'relu', 700, features_size))
+        net.add_layer(Layer('hidden', 'relu', 400, 700))
         net.add_layer(Layer('hidden', 'relu', 200, 400))
         net.add_layer(Layer('hidden', 'relu', 100, 200))
         net.add_layer(Layer('hidden', 'relu', 50, 100))
@@ -147,7 +148,7 @@ def _main():
                 dataset.shuffle_train()
                 train_batches = dataset.get_train_batches(minibatches_size)
 
-                if epoch == 0:
+                if epoch == 1:
                     # https://stackoverflow.com/questions/25239933/how-to-add-title-to-subplots-in-matplotlib
                     # https://stackoverflow.com/questions/3823752/display-image-as-grayscale-using-matplotlib
                     # https://stackoverflow.com/questions/39659998/using-pyplot-to-create-grids-of-plots
@@ -181,7 +182,7 @@ def _main():
                     _, prediction_metrics_train_batch \
                         = net.predict_and_compare(dataset_train_batch)
 
-                    if idx % 10 == 0:
+                    if (idx + 1) % 10 == 0:
                         IPython.display.clear_output(wait=True)
                         print("epoch {:3d}, minibatch {:4d}/{:4d}, cost {:5.4f}, acc {:6.4f}%".format(
                             epoch, idx + 1, number_of_iterations,
