@@ -27,19 +27,20 @@ The network was trained on AWS instance for a short time using the MNIST dataset
 
 > **Results**
 > - Train accuracy: 100.00%
-> - Dev accuracy:    97.95%
-> - Test accuracy:   97.33%
+> - Dev accuracy:    97.70%
+> - Test accuracy:   97.43%
 >
 > *Looking at results, it's obvious that the model has some **variance**. Reducing this variance is outside the scope of this exercise and is addressed using CNNs with Tensorflow in another repo.*
 
 > **Layers in the network**
-> - layer 0: input, units: 784 (grayscale images 28 x 28)
-> - layer 1: relu, units: 400
-> - layer 2: relu, units: 200
-> - layer 3: relu, units: 100
-> - layer 4: relu, units: 50
-> - layer 5: relu, units: 25
-> - layer 6: softmax, units: 10
+> - layer 0: input, units: 784 (grayscale images 28x28x1)
+> - layer 1: relu, units: 700
+> - layer 2: relu, units: 400
+> - layer 3: relu, units: 200
+> - layer 4: relu, units: 100
+> - layer 5: relu, units: 50
+> - layer 6: relu, units: 25
+> - layer 7: softmax, units: 10
 
 <div>
 <img src="results/costs_epoch.png" width="400">
