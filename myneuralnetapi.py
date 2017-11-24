@@ -287,7 +287,7 @@ class BinaryClassifierNetwork(object):
         for idx, item in enumerate(self.layers_list):
             print("   layer {}: {}, units: {}".format(
                 idx, item.layer_name, item.n_units))
-        print()
+        print("\n")
 
     def reset_network(self):
         '''reset all weights and biases'''
