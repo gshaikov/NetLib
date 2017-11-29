@@ -25,10 +25,10 @@ Implemented:
 
 The network was trained on AWS instance for a short time using the MNIST dataset to demonstrate that it works. The full implementation is in ```network_main.py```.
 
-> **Results**
-> - Train accuracy: 100.00%
-> - Dev accuracy:    97.70%
-> - Test accuracy:   97.43%
+> **Accuracy**
+> - Train: 100.00%
+> - Dev:    97.70%
+> - Test:   97.43%
 >
 > *Looking at results, it's obvious that the model has some **variance**. Reducing this variance is outside the scope of this exercise and is addressed using CNNs with Tensorflow in another repo.*
 
