@@ -30,7 +30,7 @@ The network was trained on AWS instance for a short time using the MNIST dataset
 > - Dev:    97.70%
 > - Test:   97.43%
 >
-> *Looking at results, it's obvious that the model has some **variance**. Reducing this variance is outside the scope of this exercise and is addressed using CNNs with Tensorflow in another repo.*
+> *Looking at results, it's obvious that the model overfit the dataset and has **variance**. Reducing this variance is outside the scope of this exercise and is addressed using CNNs with Tensorflow in another repo.*
 
 > **Layers in the network**
 > - layer 0: input, units: 784 (grayscale images 28x28x1)
