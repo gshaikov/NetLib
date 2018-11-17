@@ -2,7 +2,9 @@ _Disclaimer: this project was completed long time ago during my time in academia
 
 # NetLib
 
-This is my library for neural network (multilayer perceptron) implementation ``myneuralnetapi.py`` using Numpy only. Tested on a classic MNIST dataset. The dataset is taken from here: [Kaggle MNIST competition](https://www.kaggle.com/c/digit-recognizer/data) I did it in the very beginning of my Deep Learning course, even before studying frameworks like TensorFlow or Keras.
+This is my neural network library implementation built using **Numpy only**. I did it in the very beginning of my Deep Learning course, even before studying frameworks like TensorFlow or Keras.
+
+Tested on a classic MNIST dataset. The dataset is taken from here: [Kaggle MNIST competition](https://www.kaggle.com/c/digit-recognizer/data).
 
 Implemented:
 
