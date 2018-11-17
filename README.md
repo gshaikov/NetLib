@@ -1,9 +1,8 @@
-# NetAPI
+_Disclaimer: this project was completed long time ago during my time in academia._
 
-This is a neural network (multilayer perceptron) with my custom-built API ``myneuralnetapi.py``. Tested on a classic MNIST dataset. The dataset is taken from here: [Kaggle MNIST competition](https://www.kaggle.com/c/digit-recognizer/data)
+# NetLib
 
-***Note: I built the whole API using only Numpy library. For practice.***
-I did it in the very beginning of my Deep Learning course, even before studying frameworks like TensorFlow or Keras. So the API design and the ideas inside are authentic.
+This is my library for neural network (multilayer perceptron) implementation ``myneuralnetapi.py`` using Numpy only. Tested on a classic MNIST dataset. The dataset is taken from here: [Kaggle MNIST competition](https://www.kaggle.com/c/digit-recognizer/data) I did it in the very beginning of my Deep Learning course, even before studying frameworks like TensorFlow or Keras.
 
 Implemented:
 
@@ -15,7 +14,7 @@ Implemented:
 
 ## Folder structure
 
-* ``myneuralnetapi.py`` - neural network API module
+* ``myneuralnetapi.py`` - neural network library module
 * ``network_main.py``   - the main network which is trained on MNIST dataset
 * ``network_test.py``   - testing the network using dummy data, vizualizing the boundaries
 * ``datahandler.py``    - a class to handle MNIST data and feed minibatches into the neural network
