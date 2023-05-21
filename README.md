@@ -50,13 +50,13 @@ The network was trained on AWS instance for a short time using the MNIST dataset
 
 Network testing is implemented in ```network_test.py``` with dummy data with 2 features for easy visualization. Plots below illustrate that the network does what it's supposed to do. Accuracy is **99.9%** due to overlapping classes.
 
-> **Layers in the network**
-> - layer 0: input, units: 2
-> - layer 1: relu, units: 10
-> - layer 2: relu, units: 10
-> - layer 3: relu, units: 10
-> - layer 4: relu, units: 10
-> - layer 5: softmax, units: 4
+**Layers in the network**
+- layer 0: input, units: 2
+- layer 1: relu, units: 10
+- layer 2: relu, units: 10
+- layer 3: relu, units: 10
+- layer 4: relu, units: 10
+- layer 5: softmax, units: 4
 
 ![blobs](test_results/data.png)
 ![learned boundaries](test_results/boundaries.png)
