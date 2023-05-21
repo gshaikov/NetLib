@@ -26,20 +26,20 @@ Implemented:
 
 The network was trained on AWS instance for a short time using the MNIST dataset to demonstrate that it works. The full implementation is in ```network_main.py```.
 
-> **Accuracy**
-> - Train: 100.00%
-> - Dev:    97.70%
-> - Test:   97.43%
+**Accuracy**
+- Train: 100.00%
+- Dev:    97.70%
+- Test:   97.43%
 
-> **Layers in the network**
-> - layer 0: input, units: 784 (grayscale images 28x28x1)
-> - layer 1: relu, units: 700
-> - layer 2: relu, units: 400
-> - layer 3: relu, units: 200
-> - layer 4: relu, units: 100
-> - layer 5: relu, units: 50
-> - layer 6: relu, units: 25
-> - layer 7: softmax, units: 10
+**Layers in the network**
+- layer 0: input, units: 784 (grayscale images 28x28x1)
+- layer 1: relu, units: 700
+- layer 2: relu, units: 400
+- layer 3: relu, units: 200
+- layer 4: relu, units: 100
+- layer 5: relu, units: 50
+- layer 6: relu, units: 25
+- layer 7: softmax, units: 10
 
 <div>
 <img src="results/costs_epoch.png" width="400">
